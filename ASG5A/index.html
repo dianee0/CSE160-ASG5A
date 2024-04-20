@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Three.js - Fundamentals</title>
+</head>
+<body>
+    <canvas id="c"></canvas>
+</body>
+<style>
+    html, body {
+    height: 100%;
+    margin: 0;
+  }
+  #c {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  
+</style>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+        "MTLLoader": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/loaders/MTLLoader.js",
+        "OBJLoader": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/loaders/OBJLoader.js"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { MTLLoader } from 'MTLLoader';
+import { OBJLoader } from 'OBJLoader';
+
+function main() {
+    // Select the canvas and create the renderer
+    const canvas = document.querySelector('#c');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+    // Set the renderer to full screen
+    // renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // set the perspective camera parameters
+    const fov = 75;
+    const aspect = canvas.clientWidth / canvas.clientHeight; // Dynamic aspect ratio
+    const near = 0.1;
+    const far = 1000;
+    // Create perspective camera
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera.position.z = 10; // camera position set
+
+    // loading texture
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('../resources/happycat.jpg', () => {
+        // Update rendering when texture loads
+        renderer.render(scene, camera);
+    });
+    texture.colorSpace = THREE.SRGBColorSpace; // Set the texture color space
+
+    // create a scene obj
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x6BAED5); // Set the background color of the scene
+
+    // adjusts display size. i also used css to help make display look nicer.
+    function resizeRendererToDisplaySize(renderer) {
+
+        const canvas = renderer.domElement;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if ( needResize ) {
+
+            renderer.setSize( width, height, false );
+
+        }
+
+        return needResize;
+
+    }
+
+    // setup for directional light in the scene
+    const color = 0xFFFFFF;
+    const intensity = 3;
+    const light = new THREE.DirectionalLight(color, intensity);
+    light.position.set(-1, 2, 4);
+    scene.add(light);
+
+    // Cube
+    const boxWidth = 4;
+    const boxHeight = 4;
+    const boxDepth = 4;
+    const boxGeometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+    const cubeMaterial = new THREE.MeshPhongMaterial({ map: texture });
+    const cube = new THREE.Mesh(boxGeometry, cubeMaterial);
+    cube.position.x = -5;
+    scene.add(cube);
+
+    // Sphere
+    const sphereRadius = 0.75;
+    const sphereWidthDivisions = 32;
+    const sphereHeightDivisions = 16;
+    const sphereGeometry = new THREE.SphereGeometry(sphereRadius, sphereWidthDivisions, sphereHeightDivisions);
+    const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0xBA5E94 });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    sphere.position.x = 2;
+    scene.add(sphere);
+
+    // Cylinder
+    const cylinderRadiusTop = 0.5;
+    const cylinderRadiusBottom = 0.5;
+    const cylinderHeight = 2;
+    const cylinderRadialSegments = 32;
+    const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadiusTop, cylinderRadiusBottom, cylinderHeight, cylinderRadialSegments);
+    const cylinderMaterial = new THREE.MeshPhongMaterial({ color: 0x429E37 });
+    const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+    scene.add(cylinder);
+
+
+    {
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load( './resources/cat_obj/Cat_v1_l3.mtl', ( mtl ) => {
+            mtl.preload();
+            const objLoader = new OBJLoader();
+            objLoader.setMaterials( mtl );
+            // Load and position the cat model
+            objLoader.load( './resources/cat_obj/Cat_v1_l3.obj', ( root ) => {
+                scene.add(root);
+    
+                // Set the initial rotation of the cat object
+                root.rotation.x = Math.PI / 2; // Rotate 90 degrees around the X-axis
+                root.rotation.y = Math.PI;  // Rotate 360
+                root.rotation.z = 3 * Math.PI / 4; // rotate 360
+
+                // Adjust the scale and position as needed
+                root.scale.set(0.1, 0.1, 0.1);
+                root.position.set(0, -5, 2);
+                
+            } );
+        } );
+
+    }
+
+
+
+    function render(time) {
+        time *= 0.001; // convert time to seconds
+
+        // ensure the display size is adjusted
+        if (resizeRendererToDisplaySize(renderer) ) {
+
+            const canvas = renderer.domElement;
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+
+        }
+
+        cube.rotation.x = time;
+        cube.rotation.y = time;
+        
+        renderer.render(scene, camera);
+        requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+
+}
+
+main();
+</script>
+</html>
